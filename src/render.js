@@ -1,6 +1,8 @@
 // Funções puras (navegador, build do Vite e prerender) que geram o HTML. As faixas são usadas como vieram das artes.
+import { PRECO, SITE_URL } from './config.js';
+
 export const SITE = {
-  url: 'https://pesqueiro.chumbada.com.br',
+  url: SITE_URL,
   loja: 'https://chumbadas.com.br',
   wa: '5511941900602',
 };
@@ -12,7 +14,7 @@ export const waUrl = (p) => `https://wa.me/${SITE.wa}?text=${encodeURIComponent(
 export const productPath = (p) => `/produtos/${p.handle}/`;
 export const bannerSrc = (p, suf = '') => `/img/${p.handle}${suf}.webp`;
 const catName = (data, id) => data.categorias.find((c) => c.id === id)?.nome ?? '';
-const meta = (p) => [p.variacoes > 1 ? `${p.variacoes} variações` : '1 versão', p.preco ? `a partir de ${brl(p.preco)}` : ''].filter(Boolean).join(' · ');
+const meta = (p) => [p.variacoes > 1 ? `${p.variacoes} variações` : '1 versão', PRECO && p.preco ? `a partir de ${brl(p.preco)}` : ''].filter(Boolean).join(' · ');
 
 const img = (p, cls, eager) =>
   `<img class="${cls}" src="${bannerSrc(p)}" srcset="${bannerSrc(p, '-m')} 900w, ${bannerSrc(p)} 1800w" sizes="(max-width: 900px) 100vw, 1500px" width="1800" height="600" alt="${esc(p.titulo)} — ${esc(p.frase)}" ${eager ? '' : 'loading="lazy"'} decoding="async">`;
@@ -97,12 +99,12 @@ export function detailHTML(p, data, { prev, next } = {}) {
       ${p.fotos.length > 1 ? `<div class="gal-thumbs" role="group" aria-label="Fotos do produto">${p.fotos.map((f, i) => `<button type="button" class="thumb${i === 0 ? ' is-on' : ''}" data-foto="${f}" aria-label="Foto ${i + 1}"><img src="${f}" alt="" loading="lazy" width="120" height="120"></button>`).join('')}</div>` : ''}
     </div>
     <aside class="buy" aria-label="Comprar">
-      <div class="buy-price"><small data-price-label>${p.variacoes > 1 ? 'a partir de' : 'preço'}</small><b data-price>${p.preco ? brl(p.preco) : 'Consulte'}</b></div>
+      ${PRECO ? `<div class="buy-price"><small data-price-label>${p.variacoes > 1 ? 'a partir de' : 'preço'}</small><b data-price>${p.preco ? brl(p.preco) : 'Consulte'}</b></div>` : `<div class="buy-price"><small>${p.variacoes > 1 ? p.variacoes + ' variações' : 'versão única'}</small></div>`}
       ${pickers}
       <p class="buy-sel" data-sel></p>
       <div class="buy-row">
         <div class="qty" role="group" aria-label="Quantidade"><button type="button" data-q="-1" aria-label="Menos">−</button><input type="number" min="1" max="9999" value="1" inputmode="numeric" aria-label="Quantidade"><button type="button" data-q="1" aria-label="Mais">+</button></div>
-        <button type="button" class="btn btn-solid btn-add" data-add>Adicionar à Minha Seleção</button>
+        <button type="button" class="btn btn-solid btn-add" data-add>${PRECO ? 'Adicionar à Minha Seleção' : 'Adicionar à Lista'}</button>
       </div>
       <div class="buy-links">
         <a class="btn" href="${lojaUrl(p)}" target="_blank" rel="noopener">Comprar na loja <span>↗</span></a>
@@ -129,7 +131,7 @@ export function productJsonLd(p, data) {
       {
         '@type': 'Product', name: p.titulo, image: [SITE.url + (p.foto || bannerSrc(p)), SITE.url + bannerSrc(p)], description: plain(p),
         brand: { '@type': 'Brand', name: 'Chumbada Oficial' }, category: catName(data, p.cat), url,
-        offers: p.preco ? {
+        offers: PRECO && p.preco ? {
           '@type': p.variacoes > 1 ? 'AggregateOffer' : 'Offer', priceCurrency: 'BRL',
           ...(p.variacoes > 1 ? { lowPrice: p.preco, offerCount: p.variacoes } : { price: p.preco }),
           availability: 'https://schema.org/InStock', url: lojaUrl(p),

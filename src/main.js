@@ -3,6 +3,7 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
 import data from './data/products.json';
+import { PRECO } from './config.js';
 import { detailHTML, gridPageHTML, brl, productPath, productTitle, DEFAULT_TITLE } from './render.js';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -225,10 +226,12 @@ function setupBuy(p) {
   function paint() {
     const v = current();
     $$('.pick', root).forEach((g) => $$('.pill', g).forEach((b) => { const on = v.opts[g.dataset.opt] === b.dataset.val; b.classList.toggle('is-on', on); b.setAttribute('aria-pressed', on); }));
-    $('[data-price]', root).textContent = v.price > 0 ? brl(v.price) : 'Consulte';
-    $('[data-price-label]', root).textContent = 'preço unitário';
+    if (PRECO) {
+      $('[data-price]', root).textContent = v.price > 0 ? brl(v.price) : 'Consulte';
+      $('[data-price-label]', root).textContent = 'preço unitário';
+    }
     $('[data-sel]', root).textContent = [label(v), v.sku && `SKU ${v.sku}`].filter(Boolean).join(' · ');
-    add.disabled = !(v.price > 0);
+    add.disabled = PRECO && !(v.price > 0);
     input.value = qty;
     if (v.img && !firstPaint) showFoto(v.img);
     firstPaint = false;
@@ -247,7 +250,7 @@ function setupBuy(p) {
   add.addEventListener('click', () => {
     const v = current();
     if (!window.MinhaSelecao) { window.open(`https://wa.me/5511941900602?text=${encodeURIComponent(`Olá! Quero: ${p.titulo} ${label(v)} (${qty}x)`)}`, '_blank'); return; }
-    window.MinhaSelecao.addItem({ catalog: p.catSelecao, productId: p.handle, name: p.titulo, sku: v.sku || null, variant: label(v), qty, unitPrice: v.price });
+    window.MinhaSelecao.addItem({ catalog: p.catSelecao, productId: p.handle, name: p.titulo, sku: v.sku || null, variant: label(v), qty, ...(PRECO ? { unitPrice: v.price } : {}) });
     qty = 1; input.value = 1;
     gsap.fromTo(add, { scale: 0.94 }, { scale: 1, duration: 0.6, ease: 'elastic.out(1,0.4)' });
   });

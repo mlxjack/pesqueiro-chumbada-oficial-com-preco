@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import { readFileSync } from 'node:fs';
+import { PRECO, HUB_HOST } from './src/config.js';
 import { slideHTML, wallHTML, headTags, indexJsonLd, DEFAULT_TITLE, DEFAULT_DESC } from './src/render.js';
 
 const data = JSON.parse(readFileSync(new URL('./src/data/products.json', import.meta.url), 'utf-8'));
@@ -15,6 +16,7 @@ const ssr = () => ({
         title: DEFAULT_TITLE, description: DEFAULT_DESC, path: '/',
         image: '/img/chumbada-bola-furada-natural.webp', jsonld: indexJsonLd(data),
       }))
+      .replace('<!--CART-->', PRECO ? '' : `<script>window.MINHA_SELECAO_MODE = 'pdf'; window.MINHA_SELECAO_HUB_HOSTNAME = '${HUB_HOST}';</script>`)
       .replace('<!--WALL-->', wallHTML(data))
       .replace('<!--SLIDES-->', data.produtos.map((p) => slideHTML(p, data)).join('\n'))
       .replace('<!--STATS-->', JSON.stringify({
